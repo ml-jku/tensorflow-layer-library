@@ -1,0 +1,16 @@
+{
+  "specs": "mnist_dense",
+  "cuda_gpu": "0",
+  "architecture": "architectures.DenseNet",
+  "iterations": 1000,
+  "batchsize": 256,
+  "display_step": 10,
+  "dropout": 0.0,
+  "learning_rate": 1e-2,
+  "n_hidden_1": 128,
+  "n_hidden_2": 128,
+  "score_at": 1000,
+  "plot_at": 20,
+  "tf_allow_growth": true,
+  "working_dir": "working_dir"
+}

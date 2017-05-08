@@ -1,0 +1,16 @@
+# python
+*.pyc
+*.pyo
+
+# temporary files from text editors
+*~
+
+# interim latex files
+*.log
+*.out
+*.aux
+*.tmp
+
+# pycharm project files
+*.iml
+#*.xml

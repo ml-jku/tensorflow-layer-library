@@ -1,0 +1,16 @@
+{
+   "specs":                 "ArchitectureLSTM",
+   "cuda_gpu":              "0",
+   "architecture":          "sample_architectures.ArchitectureLSTM3",
+   "n_epochs":              100,
+   "score_at":              1000,
+   "batchsize":             15,
+   "optimizer_params":      {"learning_rate": 1e-3},
+   "optimizer":             "AdamOptimizer",
+   "l1":                    1e-6,
+   "l2":                    1e-5,
+   "n_lstm":                5,
+   "tickersteps":           0,
+   "n_dense_units":         [20, 20],
+   "working_dir":           "working_dir"
+}
