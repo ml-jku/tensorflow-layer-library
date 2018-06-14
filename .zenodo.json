@@ -1,0 +1,29 @@
+{
+    "description": "Tensorflow Layer Library (TeLL)", 
+    "license": "MIT", 
+    "title": "{T}ensorflow {L}ayer {L}ibrary ({TeLL}): v1.0.0", 
+    "version": "v1.0.0", 
+    "upload_type": "software", 
+    "publication_date": "2018-06-14", 
+    "creators": [
+        {
+            "name": "Widrich Michael"
+        }, 
+        {
+            "name": "Hofmarcher Markus"
+        }
+    ], 
+    "access_right": "open", 
+    "related_identifiers": [
+        {
+            "scheme": "url", 
+            "identifier": "https://github.com/bioinf-jku/tensorflow-layer-library/tree/v1.0.0", 
+            "relation": "isSupplementTo"
+        }, 
+        {
+            "scheme": "doi", 
+            "identifier": "10.5281/zenodo.1289301", 
+            "relation": "isVersionOf"
+        }
+    ]
+}
