@@ -1,5 +1,5 @@
-# Tensorflow Layer Library (TeLL)
-[![DOI](https://zenodo.org/badge/87196662.svg)](https://zenodo.org/badge/latestdoi/87196662)
+# Tensorflow Layer Library (TeLL) [![DOI](https://zenodo.org/badge/87196662.svg)](https://zenodo.org/badge/latestdoi/87196662)
+
 Provides a variety of tensorflow-based network layers, flexible (recurrent) network designs, convenience routines for saving and resuming networks, and more!
 
 Copyright (c) Michael Widrich and Markus Hofmarcher, Institute of Bioinformatics, Johannes Kepler University Linz, Austria.
