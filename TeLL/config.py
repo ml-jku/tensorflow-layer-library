@@ -5,10 +5,10 @@
 Default configuration settings
 
 """
-import os
 import json
-import importlib
-from TeLL.utility.misc import get_rec_attr, extract_named_args, try_to_number, parse_args
+import os
+
+from TeLL.utility.misc import import_object, extract_named_args, try_to_number, parse_args
 
 
 class Config(object):
@@ -45,13 +45,15 @@ class Config(object):
             setattr(self, name, value)
             print("CONFIG: {}={}".format(name, getattr(self, name)))
     
+    def has_value(self, name):
+        return hasattr(self, name)
+    
     def get_value(self, name, default=None):
         return getattr(self, name, default)
     
     def import_architecture(self):
         if hasattr(self, "architecture"):
-            architecture = importlib.import_module(self.architecture.split('.', maxsplit=1)[0])
-            return get_rec_attr(architecture, self.architecture.split('.', maxsplit=1)[-1])
+            return import_object(self.architecture)
         else:
             return None
     
@@ -66,6 +68,32 @@ class Config(object):
             for k, v in override.items():
                 name = k[2:]
                 value = v if v.startswith('"') or v.startswith("'") else try_to_number(v)
+                if "." in name:
+                    names = name.split(".")
+                    name = names[0]
+                    if len(names) == 2:
+                        if hasattr(self, names[0]):
+                            curdict = getattr(self, names[0])
+                        else:
+                            curdict = dict()
+                        curdict[names[1]] = value
+                        value = curdict
+                    elif len(names) == 3:
+                        if hasattr(self, names[0]):
+                            curdict = getattr(self, names[0])
+                        else:
+                            curdict = dict()
+                        
+                        if names[1] in curdict:
+                            subdict = curdict[names[1]]
+                        else:
+                            curdict[names[1]] = dict()
+                            subdict = curdict[names[1]]
+                        
+                        subdict[names[2]] = value
+                        value = curdict
+                    else:
+                        raise Exception("Unsupported command line option (can only override dicts with 1 or 2 levels)")
                 self.override(name, value)
     
     #

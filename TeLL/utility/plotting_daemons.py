@@ -6,7 +6,7 @@ Handling of worker subprocesses and threads for plotting
 
 """
 
-from multiprocessing import Pool
+from multiprocess import Pool
 
 
 def stop_plotting_daemon(plotting_queue, plotting_proc):
@@ -36,8 +36,10 @@ def plotting_demon(plotting_queue, multicore):
         if rec == 0:
             break
         func, arguments = rec
-        
-        pool.apply_async(func, arguments)
+        if isinstance(arguments, tuple):
+            pool.apply_async(func, *arguments)
+        else:
+            pool.apply_async(func, arguments)
     
     pool.close()
     pool.join()
@@ -47,6 +49,7 @@ def plotting_demon(plotting_queue, multicore):
 
 
 def start_plotting_daemon(wait=False, multicore=3):
+    """ Launch programms with plotting_queue.put(function, (args, kwargs))"""
     import multiprocessing as mp
     plotting_queue = mp.Queue()
     proc = launch_proc(target=plotting_demon, arguments=[plotting_queue, multicore], daemon=False, wait=wait)

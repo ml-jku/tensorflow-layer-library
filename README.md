@@ -11,7 +11,7 @@ You can either install TeLL via pip, use TeLL as a git-submodule in your git pro
 If you intend on using multiple versions of TeLL in different projects, we recommend to use the [git-submodule](#tell-as-git-submodule) approach.
 If you use the same TeLL version with all of your projects, a [pip installation](#tell-as-pip-package) or [static Python package](#tell-as-static-python-package) is sufficient.
 
-TeLL has been testet with tensorflow version 1.0.
+TeLL will run with tensorflow version 1.0.
 
 ### TeLL as Pip Package
 Download the TeLL package and install it via
@@ -125,14 +125,64 @@ Finally, you will need to create your configuration file (examples can be found 
 By default, TeLL will create checkpoints for each run in the working_dir folder.
 These checkpoints contain a .zip of the directory the main file is located in, so that the code base is at the correct version when the run is resumed.
 
-To resume an experiment execute tell-resume and pass the path to the working directory of the experiment as well as parameters you want to overwrite (e.g. epochs, data directories, learning rate, ...)
+To resume an experiment run the following command:
 
 ```
-tell-resume <path to working dir containing results and 00-script.zip> --epochs <number of total epochs> --gpu <tensorflow gpu string> 
+tell-resume --epochs <number of total epochs> --gpu <tensorflow gpu string> --path <path to working dir containing results and 00-script.zip>
 ```
 
 #### Plotting
 tba
+
+
+## Directory Structure
+The project directory is structured as follows:
+``` ruby
+tensorflow-layer-library/
+| '''the TeLL project, including example scripts'''
++-- TeLL/
+|   | '''the TeLL package'''
+|   +-- architectures/
+|   |   +-- sample_architectures.py
+|   |     '''some example network architectures'''
+|   +-- configs/
+|   |   +-- examples/
+|   |   | '''example configuration files for usage with sample_architectures.py'''
+|   |   +-- config.py
+|   |     '''default configuration settings'''
+|   +-- network_modules/
+|   | '''holds modules for network'''
+|   |   +-- datareader.py
+|   |   | '''base class for dataset readers'''
+|   |   +-- datasets.py
+|   |   | '''classes for dataset loaders and creators'''
+|   |   +-- initializations.py
+|   |   | '''initializers for variables'''
+|   |   +-- layers.py 
+|   |   | '''network layer classes'''
+|   |   +-- loss.py 
+|   |   | '''loss functions'''
+|   |   +-- regularization.py
+|   |     '''regularization functions'''
+|   +-- utility/
+|     '''holds convenience functions'''
+|       +-- misc.py 
+|       | '''unclassified convenience functions'''
+|       +-- plotting.py 
+|       | '''functions for plotting and saving images/videos'''
+|       +-- plotting_daemons.py
+|         '''functions for creating and starting (sub)processes for plotting'''
++-- README.md
+|     '''this file'''
++-- main_lstm_example.py
+|     '''example main file for LSTM architectures'''
++-- main_convlstm_example.py
+|     '''example main file for convLSTM architectures'''
++-- main_convlstm_advanced_example.py
+|     '''example main file for advanced convLSTM architectures'''
++-- todo.py
+      '''todo-list: indicate on what you are working and strikethrough when you are done'''
+```
 
 ## Contributing
 

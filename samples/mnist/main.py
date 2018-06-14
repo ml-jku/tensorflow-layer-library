@@ -52,11 +52,23 @@ def main(_):
     # Define loss and optimizer
     with tf.name_scope("Cost"):
         cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=model.output, labels=model.y_))
-        decor1 = decor_penalty(model.hidden1, model.y_, 10, [1], 0.)
-        decor2 = decor_penalty(model.hidden2, model.y_, 10, [1], 6e-5)
-        optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost + decor1 + decor2)
+
+        ##entropy = tf.reduce_mean(tf.contrib.bayesflow.entropy.entropy_shannon(
+        ##    tf.contrib.distributions.Categorical(p=tf.nn.softmax(logits=model.output))))
+
+        probs = tf.nn.softmax(logits=model.output)
+        entropy = tf.reduce_mean(-tf.reduce_sum(tf.log(tf.maximum(probs, 1e-15)) * probs, 1))
+
+        # test decor regularization
+        #decor_penalty(model.hidden1, model.y_, 10, [1], 0.)
+        #decor_penalty(model.hidden2, model.y_, 10, [1], 0.)
+
+        optimizer = tell.tf_optimizer.minimize(cost - config.get_value("entropy_w", 0.) * entropy)
+
         tf.summary.scalar("Loss", cost)
-        tf.summary.scalar("Decor", decor1 + decor2)
+        #tf.summary.scalar("Decor", decor1 + decor2)
+        #tf.summary.scalar("Entropy", entropy)
+        tf.summary.scalar("O-Prob", tf.reduce_mean(tf.reduce_sum(tf.nn.softmax(logits=model.output) * model.y_, 1)))
     
     # Evaluate model
     with tf.name_scope("Accuracy"):
@@ -67,12 +79,13 @@ def main(_):
     merged_summaries = tf.summary.merge_all()
     
     # Initialize tensorflow variables (either initializes them from scratch or restores from checkpoint)
-    step = tell.initialize_tf_variables().global_step
+    step = tell.initialize_tf_variables(reset_optimizer_on_restore=True).global_step
     
     # -------------------------------------------------------------------------
     # Start training
     # -------------------------------------------------------------------------
     acc_train = 0.
+    val_acc_best = 0.
     try:
         while step < iterations:
             check_kill_file(workspace=workspace)
@@ -86,14 +99,18 @@ def main(_):
                                                       model.dropout: 0})
                 summary_writer_validation.add_summary(summary, i)
                 print('step {}: train acc {}, valid acc {}'.format(i, acc_train, acc))
+
+                if acc > val_acc_best:
+                    val_acc_best = acc
             else:
                 summary, acc_train, _ = session.run([merged_summaries, accuracy, optimizer],
-                                              feed_dict={model.X: batch_x, model.y_: batch_y, model.dropout: dropout})
+                                              feed_dict={model.X: batch_x, model.y_: batch_y,
+                                                         model.dropout: dropout})
                 summary_writer_train.add_summary(summary, i)
             
             step += 1
         
-        print("Training Finished!")
+        print("Training Finished! best valid acc {}".format(val_acc_best))
         
         # Final Eval
         print("Test Accuracy:",

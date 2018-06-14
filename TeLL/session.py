@@ -1,12 +1,13 @@
+"""
+© Michael Widrich, Markus Hofmarcher, 2017
+"""
 import os
 import numpy as np
 import tensorflow as tf
 from TeLL.config import Config
 from TeLL.utility.workingdir import Workspace
 from TeLL.utility.timer import Timer
-"""
-© Michael Widrich, Markus Hofmarcher, 2017
-"""
+
 
 def set_seed(seed: int = 12345):
     tf.set_random_seed(seed)
@@ -98,6 +99,14 @@ class TeLLSession(object):
         self.tf_session = tf_session
         self.tf_saver = tf_saver
         self.tf_summaries = summary_instances
+        
+        if config.get_value('optimizer', None) is not None:
+            if isinstance(config.optimizer, list):
+                self.tf_optimizer = [getattr(tf.train, config.optimizer[i])(**config.optimizer_params[i])
+                                     for i in range(len(config.optimizer))]
+            else:
+                self.tf_optimizer = getattr(tf.train, config.optimizer)(**config.optimizer_params)
+
         self.model = model
         self.workspace = workspace
         self.config = config
@@ -106,12 +115,16 @@ class TeLLSession(object):
         self.__global_step_update = set_global_step
         self.__tell_namescope = tell_namescope
     
-    def initialize_tf_variables(self):
+    def initialize_tf_variables(self, reset_optimizer_on_restore=False):
         """
         Initialize tensorflow variables (either initializes them from scratch or restores from checkpoint).
         
+        :param reset_optimizer_on_restore: Flag indicating whether to reset the optimizer(s) given that this 
+            function call includes a restore operation. 
+        
         :return: updated TeLL session
         """
+
         session = self.tf_session
         checkpoint = self.workspace.get_checkpoint()
         #
@@ -132,12 +145,29 @@ class TeLLSession(object):
                 summary.reopen()
                 summary.add_session_log(tf.SessionLog(status=tf.SessionLog.START), global_step=step)
             print("Resuming from checkpoint '{}' at iteration {}".format(checkpoint, step))
+            
+            if self.config.get_value('optimizer', None) is not None:
+                if reset_optimizer_on_restore:
+                    if isinstance(self.tf_optimizer, list):
+                        for optimizer in self.tf_optimizer:
+                            self.reset_optimizer(optimizer)
+                    else:
+                        self.reset_optimizer(self.tf_optimizer)
         else:
             for _, summary in self.tf_summaries.items():
                 summary.add_graph(session.graph)
         
         return self
     
+    def reset_optimizer(self, optimizer, trainables=None):
+        if trainables is None:
+            trainables = tf.trainable_variables()
+
+        slots = [optimizer.get_slot(var, name)
+                 for name in optimizer.get_slot_names()
+                 for var in trainables]
+        self.tf_session.run(tf.initialize_variables(filter(None, slots)))
+
     def save_checkpoint(self, global_step: int):
         """
         Store current state in checkpoint.
@@ -170,3 +200,6 @@ class TeLLSession(object):
             self.save_checkpoint(global_step)
         # Close session
         tf_session.close()
+        # Close and terminate plotting queue and subprocesses
+        from TeLL.utility.plotting import terminate_plotting_daemon
+        terminate_plotting_daemon()

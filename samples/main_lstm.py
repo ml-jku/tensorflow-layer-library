@@ -17,15 +17,16 @@ the different examples and descriptions);
 # Imports before spawning workers (do NOT import tensorflow or matplotlib here)
 #
 import sys
+
 import numpy as np
 import progressbar
 
 # Import TeLL
 from TeLL.config import Config
-from TeLL.utility.workingdir import Workspace
-from TeLL.datasets import ShortLongDataset
-from TeLL.utility.timer import Timer
+from TeLL.datareaders import initialize_datareaders, DataLoader
 from TeLL.utility.misc import AbortRun, check_kill_file
+from TeLL.utility.timer import Timer
+from TeLL.utility.workingdir import Workspace
 
 if __name__ == "__main__":
     from TeLL.session import TeLLSession
@@ -138,20 +139,17 @@ def main(_):
     # Initialize config, parses command line and reads specified file; also supports overriding of values from cmd
     config = Config()
     
-    # Load datasets for trainingset
-    with Timer(name="Loading Training Data"):
-        # Make sure datareader is reproducible
-        random_seed = config.get_value('random_seed', 12345)
-        np.random.seed(random_seed)  # not threadsafe, use rnd_gen object where possible
-        rnd_gen = np.random.RandomState(seed=random_seed)
-        
-        print("Loading training data...")
-        trainingset = ShortLongDataset(n_timesteps=250, n_samples=3000, batchsize=config.batchsize, rnd_gen=rnd_gen)
-        
-        # Load datasets for validationset
-        validationset = ShortLongDataset(n_timesteps=250, n_samples=300, batchsize=config.batchsize, rnd_gen=rnd_gen)
+    random_seed = config.get_value('random_seed', 12345)
+    np.random.seed(random_seed)  # not threadsafe, use rnd_gen object where possible
+    rnd_gen = np.random.RandomState(seed=random_seed)
     
-    # Initialize TeLL session
+    # Load datasets for trainingset
+    with Timer(name="Loading Data"):
+        readers = initialize_datareaders(config, required=("train", "val"))
+        trainingset = DataLoader(readers["train"], batchsize=config.batchsize)
+        validationset = DataLoader(readers["val"], batchsize=config.batchsize)
+        
+        # Initialize TeLL session
     tell = TeLLSession(config=config, summaries=["train"], model_params={"dataset": trainingset})
     
     # Get some members from the session for easier usage
@@ -162,17 +160,11 @@ def main(_):
     
     # Loss function for trainingset
     print("Initializing loss calculation...")
-    loss = tf.reduce_mean(tf.reduce_mean(tf.nn.weighted_cross_entropy_with_logits(model.y_, model.output,
-                                                                                  -tf.reduce_sum(
-                                                                                      model.y_ - 1) / tf.reduce_sum(
-                                                                                      model.y_)), axis=[1]))
+    loss = tf.reduce_mean(tf.square(model.y_ - model.output))
     train_summary = tf.summary.scalar("Training Loss", loss)  # add loss to tensorboard
     
     # Loss function for validationset
-    val_loss = tf.reduce_mean(tf.reduce_mean(tf.nn.weighted_cross_entropy_with_logits(model.y_, model.output,
-                                                                                      -tf.reduce_sum(
-                                                                                          model.y_ - 1) / tf.reduce_sum(
-                                                                                          model.y_)), axis=[1]))
+    val_loss = tf.reduce_mean(tf.square(model.y_ - model.output))
     val_loss_summary = tf.summary.scalar("Validation Loss", val_loss)  # add val_loss to tensorboard
     
     # Regularization

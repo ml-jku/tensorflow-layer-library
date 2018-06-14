@@ -1,29 +1,15 @@
 # -*- coding: utf-8 -*-
 """
 © Michael Widrich, Markus Hofmarcher, 2017
+
+Misc. objects that do not import tensorflow
 """
-"""dev_layers.py: Unfinished layer classes
-
-
-Author -- Michael Widrich
-Created on -- Wed Oct 19 10:30:51 2016
-Contact -- michael.widrich@jku.at
-
-Unfinished layer classes
-
-
-=======  ==========  =================  ================================
-Version  Date        Author             Description
-0.1      2016-10-15  Michael Widrich    Added comments and revised
-=======  ==========  =================  ================================
-
-"""
-import os
-import errno
 import argparse
-import zipfile
-import tempfile
+import errno
 import importlib
+import os
+import tempfile
+import zipfile
 from shutil import copyfile
 
 
@@ -34,6 +20,10 @@ from shutil import copyfile
 class AbortRun(Exception):
     pass
 
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Functions
+# ----------------------------------------------------------------------------------------------------------------------
 
 def check_kill_file(workspace):
     """raise an AbortRun error if the kill file exists"""
@@ -148,6 +138,11 @@ def zipdir(dir, zip, info=None, exclude=None):
             if not exclude_file:
                 zipf.write(filename=f, arcname=f[len(dir):])
     zipf.close()
+
+
+def import_object(objname):
+    objmodule = importlib.import_module(objname.split('.', maxsplit=1)[0])
+    return get_rec_attr(objmodule, objname.split('.', maxsplit=1)[-1])
 
 
 def get_rec_attr(module, attrstr):
@@ -284,3 +279,25 @@ def try_to_number(value):
         except ValueError:
             pass
     return value
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Classes
+# ----------------------------------------------------------------------------------------------------------------------
+
+class Tee(object):
+    """Created from snippets on stackoverflow"""
+    def __init__(self, original_stdout, *files):
+        self.files = files
+        self.original_stdout = original_stdout
+        
+    def write(self, obj):
+        for f in self.files:
+            f.write(obj)
+            
+    def flush(self):
+        try:
+            self.original_stdout.flush()
+        except AttributeError:
+            # if original_stdout does not support flush()
+            pass

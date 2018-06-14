@@ -8,8 +8,6 @@ Main file for simple convLSTM example to be used with convLSTM architecture in s
 config_convlstm.json; Plots input, output, weights, ConvLSTM output (of 2 ConvLSTM units), and cell states in
 working_dir;
 
-Goal: Given a video sequence with moving dots, predict 1 frame into the future after the sequence end
-
 """
 # ----------------------------------------------------------------------------------------------------------------------
 # Imports
@@ -40,10 +38,12 @@ if __name__ == "__main__":
     #  import
     #
     launch_plotting_daemon(num_workers=3)
+    
     from TeLL.session import TeLLSession
     
     import tensorflow as tf
     from TeLL.regularization import regularize
+    from TeLL.loss import image_crossentropy
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -160,15 +160,19 @@ def main(_):
     rnd_gen = np.random.RandomState(seed=random_seed)
     
     # Set datareaders
-    readers = initialize_datareaders(config, required=("train", "val"))
+    n_timesteps = config.get_value('mnist_n_timesteps', 20)
+    
+    # Load datasets for trainingset
+    with Timer(name="Loading Data"):
+        readers = initialize_datareaders(config, required=("train", "val"))
     
     # Set Preprocessing
-    trainingset = Normalize(readers["train"], apply_to=['X'])
-    validationset = Normalize(readers["val"], apply_to=['X'])
+    trainingset = Normalize(readers["train"], apply_to=['X', 'y'])
+    validationset = Normalize(readers["val"], apply_to=['X', 'y'])
     
     # Set minibatch loaders
-    trainingset = DataLoader(trainingset, batchsize=50, batchsize_method='zeropad', verbose=False)
-    validationset = DataLoader(validationset, batchsize=50, batchsize_method='zeropad', verbose=False)
+    trainingset = DataLoader(trainingset, batchsize=2, batchsize_method='zeropad', verbose=False)
+    validationset = DataLoader(validationset, batchsize=2, batchsize_method='zeropad', verbose=False)
     
     #
     # Initialize TeLL session
@@ -185,15 +189,12 @@ def main(_):
     # Define loss functions and update steps
     #
     print("Initializing loss calculation...")
-    y_shape = trainingset.get_input_shapes()["y"].shape
-    pos_target_weight = np.prod(y_shape[2:]) - 1  # only 1 pixel per sample is of positive class -> up-weight!
-    loss = tf.reduce_mean(tf.nn.weighted_cross_entropy_with_logits(targets=model.y_, logits=model.output,
-                                                                   pos_weight=pos_target_weight))
+    loss, _ = image_crossentropy(target=model.y_[:, 10:, :, :], pred=model.output[:, 10:, :, :, :],
+                                 pixel_weights=model.pixel_weights[:, 10:, :, :], reduce_by='mean')
     train_summary = tf.summary.scalar("Training Loss", loss)  # create summary to add to tensorboard
     
     # Loss function for validationset
-    val_loss = tf.reduce_mean(tf.nn.weighted_cross_entropy_with_logits(targets=model.y_, logits=model.output,
-                                                                       pos_weight=pos_target_weight))
+    val_loss = loss
     val_loss_summary = tf.summary.scalar("Validation Loss", val_loss)  # create summary to add to tensorboard
     
     # Regularization
@@ -213,21 +214,25 @@ def main(_):
     # Set up plotting
     #  (store tensors we want to plot in a dictionary for easier tensor-evaluation)
     #
-    # We want to plot input, output and target for the 1st sample, last frame, and 1st channel in subplot 1
+    # We want to plot input, output and target for the 1st sample, 1st frame, and 1st channel in subplot 1
     tensors_subplot1 = OrderedDict()
-    tensors_subplot1['input'] = model.X[0, -1, :, :, 0]
-    tensors_subplot1['target'] = model.y_[0, -1, :, :, 0]
-    tensors_subplot1['network_output'] = model.output[0, -1, :, :, 0]
-    # We also want to plot the cell states and hidden states for each frame (again of the 1st sample and 1st lstm unit)
-    # in subplot 2 and 3
     tensors_subplot2 = OrderedDict()
     tensors_subplot3 = OrderedDict()
+    for frame in range(n_timesteps):
+        tensors_subplot1['input_{}'.format(frame)] = model.X[0, frame, :, :]
+        tensors_subplot2['target_{}'.format(frame)] = model.y_[0, frame, :, :] - 1
+        tensors_subplot3['network_output_{}'.format(frame)] = tf.argmax(model.output[0, frame, :, :, :], axis=-1) - 1
+    # We also want to plot the cell states and hidden states for each frame (again of the 1st sample and 1st lstm unit)
+    # in subplot 2 and 3
+    tensors_subplot4 = OrderedDict()
+    tensors_subplot5 = OrderedDict()
     for frame in range(len(model.lstm_layer.c)):
-        tensors_subplot2['hiddenstate_{}'.format(frame)] = model.lstm_layer.h[frame][0, :, :, 0]
-        tensors_subplot3['cellstate_{}'.format(frame)] = model.lstm_layer.c[frame][0, :, :, 0]
+        tensors_subplot4['hiddenstate_{}'.format(frame)] = model.lstm_layer.h[frame][0, :, :, 0]
+        tensors_subplot5['cellstate_{}'.format(frame)] = model.lstm_layer.c[frame][0, :, :, 0]
     # Create a list to store all symbolic tensors for plotting
     plotting_tensors = list(tensors_subplot1.values()) + list(tensors_subplot2.values()) + \
-                       list(tensors_subplot3.values())
+                       list(tensors_subplot3.values()) + list(tensors_subplot4.values()) + \
+                       list(tensors_subplot5.values())
     
     #
     # Finalize graph
@@ -296,37 +301,60 @@ def main(_):
                     summary_writer_train.add_summary(train_summ, global_step=global_step)
                     summary_writer_train.add_summary(regpen_summ, global_step=global_step)
                     
-                    # Create and save subplot 1 (input, target, output)
+                    # Create and save subplot 1 (input)
                     save_subplots(images=plotting_values[:len(tensors_subplot1)],
                                   subfigtitles=list(tensors_subplot1.keys()),
-                                  subplotranges=[None, (0, 1), (0, 1)], colorbar=True, automatic_positioning=True,
+                                  subplotranges=[(0, 1)] * n_timesteps, colorbar=True, automatic_positioning=True,
+                                  tight_layout=True,
                                   filename=os.path.join(workspace.get_result_dir(),
-                                                        "output_ep{}_mb{}.png".format(ep, mb_i)))
+                                                        "input_ep{}_mb{}.png".format(ep, mb_i)))
                     del plotting_values[:len(tensors_subplot1)]
                     
-                    # Create and save subplot 2 (hidden states, i.e. ConvLSTM outputs)
+                    # Create and save subplot 2 (target)
                     save_subplots(images=plotting_values[:len(tensors_subplot2)],
                                   subfigtitles=list(tensors_subplot2.keys()),
-                                  title='ConvLSTM hidden states (outputs)', colorbar=True, automatic_positioning=True,
+                                  subplotranges=[(0, 10) * n_timesteps], colorbar=True, automatic_positioning=True,
+                                  tight_layout=True,
                                   filename=os.path.join(workspace.get_result_dir(),
-                                                        "hidden_ep{}_mb{}.png".format(ep, mb_i)))
+                                                        "target_ep{}_mb{}.png".format(ep, mb_i)))
                     del plotting_values[:len(tensors_subplot2)]
                     
-                    # Create and save subplot 3 (cell states)
+                    # Create and save subplot 3 (output)
                     save_subplots(images=plotting_values[:len(tensors_subplot3)],
                                   subfigtitles=list(tensors_subplot3.keys()),
+                                  # subplotranges=[(0, 10)] * n_timesteps,
+                                  colorbar=True, automatic_positioning=True,
+                                  tight_layout=True,
+                                  filename=os.path.join(workspace.get_result_dir(),
+                                                        "output_ep{}_mb{}.png".format(ep, mb_i)))
+                    del plotting_values[:len(tensors_subplot3)]
+                    
+                    # Create and save subplot 2 (hidden states, i.e. ConvLSTM outputs)
+                    save_subplots(images=plotting_values[:len(tensors_subplot4)],
+                                  subfigtitles=list(tensors_subplot4.keys()),
+                                  title='ConvLSTM hidden states (outputs)', colorbar=True, automatic_positioning=True,
+                                  tight_layout=True,
+                                  filename=os.path.join(workspace.get_result_dir(),
+                                                        "hidden_ep{}_mb{}.png".format(ep, mb_i)))
+                    del plotting_values[:len(tensors_subplot4)]
+                    
+                    # Create and save subplot 3 (cell states)
+                    save_subplots(images=plotting_values[:len(tensors_subplot5)],
+                                  subfigtitles=list(tensors_subplot5.keys()),
                                   title='ConvLSTM cell states', colorbar=True, automatic_positioning=True,
+                                  tight_layout=True,
                                   filename=os.path.join(workspace.get_result_dir(),
                                                         "cell_ep{}_mb{}.png".format(ep, mb_i)))
-                    del plotting_values[:len(tensors_subplot3)]
+                    del plotting_values[:len(tensors_subplot5)]
                 
                 else:
                     #
                     # Perform weight update without plotting
                     #
                     with Timer(verbose=True, name="Weight Update"):
-                        train_summ, regpen_summ, _, cur_loss = sess.run([train_summary, regpen_summary, update, loss],
-                                                                        feed_dict={model.X: mb['X'], model.y_: mb['y']})
+                        train_summ, regpen_summ, _, cur_loss = sess.run([
+                            train_summary, regpen_summary, update, loss],
+                            feed_dict={model.X: mb['X'], model.y_: mb['y']})
                     
                     # Add current summary values to tensorboard
                     summary_writer_train.add_summary(train_summ, global_step=global_step)

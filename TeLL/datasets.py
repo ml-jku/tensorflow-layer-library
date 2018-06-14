@@ -17,16 +17,6 @@ from TeLL.utility.misc import load_files_in_dir
 from abc import ABCMeta, abstractmethod
 
 
-class DataReader:
-    __metaclass__ = ABCMeta
-    
-    @abstractmethod
-    def batch_loader(self): pass
-    
-    @abstractmethod
-    def close(self): pass
-
-
 def load_image(image_path, image_scaling_factor, resampling_method):
     """Load an image from image_path, resize according to self.image_scaling_factor with resampling_method
     and apply optional function 'preprocessing'
@@ -453,8 +443,7 @@ class DatareaderAdvancedImageFiles(object):
         id2label : dict
             Dictionary mapping label ids to training ids, if passed number of samples will be set to length of this dict
         void_class : int
-            Training id of void class (no error signal for pixels of this class); this class will NOT count towards the
-             number of classes (i.e. reduces num_classes by one)
+            Training id of void class (no error signal for pixels of this class)
         subset:
             False or fraction of dataset to load
         add_zoom : None, float, int, or list
@@ -608,7 +597,12 @@ class DatareaderAdvancedImageFiles(object):
         if self.stretch_values:
             image = stretch_values(image)
 
-        return np.asarray(image, dtype=np.float32)
+        imarr = np.asarray(image, dtype=np.float32)
+        
+        if len(imarr.shape) == 2:
+            imarr = np.reshape(imarr, imarr.shape + (1,))
+        
+        return imarr
 
     def load_label_image(self, path, flip=False, zoom_factor=1, left_lower_corner=(0, 0)):
         """Load a single label image"""
@@ -932,182 +926,4 @@ class DatareaderAdvancedImageFiles(object):
         self.processes.clear()
 
 
-class MovingDotDataset(object):
-    def __init__(self, dtype=np.float32, rnd_gen=np.random, batchsize=20, n_timesteps=20, n_samples=500, edge_size=35):
-        """Example class containing dataset with video sequences in which two single pixels move on the x dimension
-        in opposite directions;
-        Frame resolution is edge_size x edge_size; Target is the next frame after the last frame;
-        x_shape=(n_samples, n_timesteps, edge_size, edge_size, 1); y_shape=(n_samples, 1, edge_size, edge_size, 1);
-        """
-        
-        # Two feature dimensions for the 2 moving directions, which will be merged into 1 dimension
-        x = np.zeros((n_samples, n_timesteps + 1, edge_size, edge_size, 2), dtype=np.bool)
-        
-        #
-        # Set an initial position for the two moving pixels
-        #
-        positions_pot = np.array(range(0, edge_size), dtype=np.int)
-        x_positions = rnd_gen.choice(positions_pot, size=(n_samples, 2), replace=True)
-        y_positions = rnd_gen.choice(positions_pot, size=(n_samples, 2), replace=True)
-        
-        #
-        # Tile positions for all frames and move the x_positions
-        #
-        for s in range(n_samples):
-            x_pos = np.arange(n_timesteps + 1, dtype=np.int) * 2 + x_positions[s, 0]
-            x_pos %= edge_size
-            y_pos = y_positions[s, 0]
-            x[s, np.arange(n_timesteps + 1), x_pos, y_pos, 0] = 1
-            
-            x_pos[:] = np.arange(n_timesteps + 1, dtype=np.int) * 2 + x_positions[s, 1]
-            x_pos = x_pos[::-1]
-            x_pos %= edge_size
-            y_pos = y_positions[s, 1]
-            x[s, np.arange(n_timesteps + 1), x_pos, y_pos, 1] = 1
-        
-        #
-        # Join the two feature dimension into one
-        #
-        x = np.array(np.logical_or(x[:, :, :, :, 0], x[:, :, :, :, 1]), dtype=np.float32)
-        x = x[:, :, :, :, None]  # add empty feature dimension
-        
-        #
-        # y is the next frame
-        #
-        y = x[:, -1:, :]
-        x = x[:, :-1, :]
-        
-        self.x = x
-        self.y = y
-        self.ids = np.arange(n_samples)
-        self.n_samples = n_samples
-        self.batchsize = batchsize
-        self.n_mbs = np.int(np.ceil(self.n_samples / batchsize))
-        self.X_shape = (batchsize,) + self.x.shape[1:]
-        self.y_shape = (batchsize,) + self.y.shape[1:]
-    
-    def batch_loader(self, rnd_gen=np.random, shuffle=True):
-        """load_mbs yields a new minibatch at each iteration"""
-        batchsize = self.batchsize
-        inds = np.arange(self.n_samples)
-        if shuffle:
-            rnd_gen.shuffle(inds)
-        n_mbs = np.int(np.ceil(self.n_samples / batchsize))
-        
-        x = np.zeros(self.X_shape, np.float32)
-        y = np.zeros(self.y_shape, np.float32)
-        ids = np.empty((batchsize,), np.object_)
-        
-        for m in range(n_mbs):
-            start = m * batchsize
-            end = (m + 1) * batchsize
-            if end > self.n_samples:
-                end = self.n_samples
-            mb_slice = slice(start, end)
-            
-            x[:end - start, :] = self.x[inds[mb_slice], :]
-            y[:end - start, :] = self.y[inds[mb_slice], :]
-            ids[:end - start] = self.ids[inds[mb_slice]]
-            
-            yield dict(X=x, y=y, ID=ids)
-    
-    def close(self):
-        return 0
 
-
-class ShortLongDataset(object):
-    def __init__(self, dtype=np.float32, rnd_gen=np.random, batchsize=20, n_timesteps=1000, n_samples=50000):
-        """Class containing dataset with sequences where information over short and long subsequences need to be
-        recognized
-        
-        sl = periodic signal with value 1 and frequency fl
-        sh = random dirac peaks with peak distances pd [0, n_timesteps/3]
-        pl = sum(sl)/wl/2 for half a wavelength wl
-        ph = 1 if 0.5 < sl < 0.7
-        
-        x = abs(sl) + abs(sh)
-        y = 0.5 < (pl + ph) / 2 < 0.75
-        
-        fl = n_timesteps / {5,6,7,8,9,10}
-        fh = {1,2,3,4,5,6,7,8,9,10}
-        """
-        
-        x = np.zeros((n_samples, n_timesteps, 2), dtype=dtype)
-        y = np.zeros((n_samples, n_timesteps, 1), dtype=dtype)
-        
-        #
-        # Create signal sl
-        #
-        # Pick random numbers for lengths of sinus waves
-        fl_pot = np.array(range(5, 50))
-        fl_picks = rnd_gen.choice(fl_pot, size=n_samples, replace=True)
-        # Pick random offsets from starting position of sequence
-        roll_picks = rnd_gen.choice(np.arange(0, np.max(fl_pot) * 2), size=n_samples, replace=True)
-        
-        for s_i in range(n_samples):
-            fl = fl_picks[s_i]
-            wave = np.array(np.sin(np.linspace(0, (np.pi - 1e-6) * 2, num=n_timesteps / fl)) > 0,
-                            dtype=dtype)
-            wave_bc = np.broadcast_to(wave, (fl, int(n_timesteps / fl)))
-            x[s_i, :np.prod(wave_bc.shape), 0] = wave_bc.flatten()
-            x[s_i, :, 0] = np.roll(x[s_i, :, 0], shift=roll_picks[s_i], axis=0)
-            
-            true_wave = np.array(wave, dtype=bool)
-            wave[true_wave] = np.cumsum(wave[true_wave])
-            wave /= np.max(wave)
-            wave_cs = np.broadcast_to(wave, (fl, int(n_timesteps / fl)))
-            y[s_i, :np.prod(wave_bc.shape), 0] = wave_cs.flatten()
-            y[s_i, :, 0] = np.roll(y[s_i, :, 0], shift=roll_picks[s_i], axis=0)
-        
-        #
-        # Create signal sh
-        #
-        pd_pot = np.array(range(5, int(n_timesteps / 10)))
-        for s_i in range(n_samples):
-            pd_pick = 0
-            while True:
-                pd_pick += rnd_gen.choice(pd_pot, size=1, replace=True)
-                if pd_pick >= n_timesteps:
-                    break
-                x[s_i, pd_pick, 1] += 1
-                y[s_i, pd_pick, 0] += 1
-        
-        y /= 2.
-        y[:] = (y > 0.5) & (y < 0.75)
-        
-        self.x = x
-        self.y = y
-        self.ids = np.arange(n_samples)
-        self.n_samples = n_samples
-        self.batchsize = batchsize
-        self.n_mbs = np.int(np.ceil(self.n_samples / batchsize))
-        self.X_shape = (batchsize,) + self.x.shape[1:]
-        self.y_shape = (batchsize,) + self.y.shape[1:]
-    
-    def batch_loader(self, rnd_gen=np.random, shuffle=True):
-        """load_mbs yields a new minibatch at each iteration"""
-        batchsize = self.batchsize
-        inds = np.arange(self.n_samples)
-        if shuffle:
-            rnd_gen.shuffle(inds)
-        n_mbs = np.int(np.ceil(self.n_samples / batchsize))
-        
-        x = np.zeros(self.X_shape, np.float32)
-        y = np.zeros(self.y_shape, np.float32)
-        ids = np.empty((batchsize,), np.object_)
-        
-        for m in range(n_mbs):
-            start = m * batchsize
-            end = (m + 1) * batchsize
-            if end > self.n_samples:
-                end = self.n_samples
-            mb_slice = slice(start, end)
-            
-            x[:end - start, :] = self.x[inds[mb_slice], :]
-            y[:end - start, :] = self.y[inds[mb_slice], :]
-            ids[:end - start] = self.ids[inds[mb_slice]]
-            
-            yield dict(X=x, y=y, ID=ids)
-    
-    def close(self):
-        return 0

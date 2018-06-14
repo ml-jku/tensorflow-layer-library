@@ -15,7 +15,7 @@ def max_norm(tensor):
     return tensor
 
 
-def max_norm_all_tensors(tensor_list, clip: bool = True):
+def max_norm_all_tensors(tensor_list, clip: bool = True, max_val=tf.constant(1.0)):
     """Normalization of list of tensors by maximum of tensors"""
     maxima = [tf.reduce_max(tf.abs(tensor)) for tensor in tensor_list]
     maxima = tf.stack(maxima)
@@ -23,7 +23,7 @@ def max_norm_all_tensors(tensor_list, clip: bool = True):
         maximum = tf.reduce_max(maxima) + 1e-16
     else:
         maximum = tf.reduce_max(maxima)
-    return [tf.divide(tensor, maximum) for tensor in tensor_list]
+    return [tf.divide(tensor, maximum) * max_val for tensor in tensor_list]
 
 
 def euclid_norm(tensor):

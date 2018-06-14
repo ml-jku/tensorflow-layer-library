@@ -1,22 +1,37 @@
 {
-   "specs":                 "ArchitectureConvLSTM",
-   "cuda_gpu":              "0",
-   "architecture":          "sample_architectures.ArchitectureConvLSTM",
-   "n_epochs":              100,
-   "score_at":              1000,
-   "plot_at":               50,
-   "batchsize":             10,
-   "optimizer_params":      {"learning_rate": 1e-2},
-   "optimizer":             "AdamOptimizer",
-   "l1":                    1e-6,
-   "l2":                    1e-5,
-   "n_lstm":                3,
-   "kernel_lstm_fwd":       5,
-   "kernel_lstm_bwd":       5,
-   "reduced_rec_lstm":      false,
-   "tickersteps":           3,
-   "lstm_act":              "nn.elu",
-   "store_states":          true,
-   "kernel_conv":           3,
-   "working_dir":           "working_dir"
+  "specs": "ArchitectureConvLSTM",
+  "cuda_gpu": "0",
+  "architecture": "sample_architectures.ArchitectureConvLSTM",
+  "dataset": {
+    "reader": "TeLL.datareaders.MovingDots",
+    "train": {
+      "n_timesteps": 5,
+      "n_samples": 50,
+      "random_seed": 12345
+    },
+    "val": {
+      "n_timesteps": 5,
+      "n_samples": 25,
+      "random_seed": 54321
+    }
+  },
+  "n_epochs": 100,
+  "score_at": 1000,
+  "plot_at": 50,
+  "batchsize": 10,
+  "optimizer_params": {
+    "learning_rate": 1e-2
+  },
+  "optimizer": "AdamOptimizer",
+  "l1": 1e-6,
+  "l2": 1e-5,
+  "n_lstm": 3,
+  "kernel_lstm_fwd": 5,
+  "kernel_lstm_bwd": 5,
+  "reduced_rec_lstm": false,
+  "tickersteps": 3,
+  "lstm_act": "nn.elu",
+  "store_states": true,
+  "kernel_conv": 3,
+  "working_dir": "working_dir"
 }

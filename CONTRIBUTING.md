@@ -68,6 +68,14 @@ code
 ```
 
 
+## PyCharm Configuration
+
+If working with PyCharm, please use the provided [configuration file](https://gitlab.markushofmarcher.at/markus.hofmarcher/tools/blob/b2556cd8a097377eb5bf55beedc21b4992a91724/misc/codestyle_cs.xml). Import via
+
+File->Settings->Editor->Code Style->Manage->Import...
+
+File->Settings->Editor->File and Code Templates->Python
+
 ## Docstring conventions
 
 [Numpy style](https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt) is interpretable by sphinx and recommended:

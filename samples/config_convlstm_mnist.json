@@ -1,0 +1,64 @@
+{
+  "specs": "ArchitectureConvLSTM",
+  "cuda_gpu": "0",
+  "architecture": "sample_architectures.ArchitectureConvLSTMMNIST",
+  "dataset": {
+    "reader": "TeLL.datareaders.MovingMNIST",
+    "scaling_factor": [
+      1.0,
+      1.1
+    ],
+    "scaling_velocity": [
+      0,
+      0.1
+    ],
+    "velocity": [
+      5.6,
+      14
+    ],
+    "rotation_angle": [
+      0,
+      360
+    ],
+    "rotation_velocity": [
+      0,
+      5
+    ],
+    "n_objects": 2,
+    "train": {
+      "dset": "train",
+      "n_timesteps": 20,
+      "n_samples": 5000,
+      "random_seed": 12345
+    },
+    "val": {
+      "dset": "validation",
+      "n_timesteps": 20,
+      "n_samples": 250,
+      "random_seed": 54321
+    }
+  },
+  "n_epochs": 100,
+  "score_at": 1000,
+  "plot_at": 50,
+  "batchsize": 5,
+  "optimizer_params": {
+    "learning_rate": 1e-4
+  },
+  "optimizer": "AdamOptimizer",
+  "l1": 1e-6,
+  "l2": 1e-5,
+  "enc_dec_depth": 2,
+  "n_lstm": 64,
+  "kernel_lstm_fwd": 3,
+  "kernel_lstm_bwd": 3,
+  "forgetgate": true,
+  "lstm_output_dropout": false,
+  "reduced_rec_lstm": false,
+  "tickersteps": 0,
+  "lstm_act": "nn.elu",
+  "store_states": true,
+  "kernel_conv": 3,
+  "kernel_conv_out": 1,
+  "working_dir": "working_dir"
+}

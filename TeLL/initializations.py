@@ -19,13 +19,87 @@ def constant(shape=None, init=0.1, dtype=tf.float32):
     return initial
 
 
+def orthogonal(shape, gain=np.sqrt(2)):
+    """ orthogonal initialization method
+
+     Parameters
+     -------
+     shape : array
+        the shape of the weight matrix. Frist dimension contains the width of the layer below.
+     """
+    return tf.initializers.orthogonal(gain=gain)(shape=shape)
+
+
+def scaled_elu_initialization(shape, truncated=True):
+    """ Preferred variable initialization method for the scaled ELU activation function.
+
+     Parameters
+     -------
+     shape : array
+        the shape of the weight matrix. Frist dimension contains the width of the layer below.
+     truncated : boolean
+        Whether the truncated normal distribution should be used.
+     """
+    if len(shape) == 4:
+        f_in = int(np.prod(shape[:-1]))
+    else:
+        f_in = shape[0]
+    
+    if truncated:
+        return tf.truncated_normal(shape=shape, stddev=tf.cast(tf.sqrt(1 / f_in), tf.float32))
+    else:
+        return tf.random_normal(shape=shape, stddev=tf.cast(tf.sqrt(1 / f_in), tf.float32))
+
+
+def scaled_elu_initialization_rec(shape, truncated=True):
+    """ Preferred variable initialization method for the scaled ELU activation function.
+
+     Parameters
+     -------
+     shape : array
+        the shape of the weight matrix. Frist dimension contains the width of the layer below.
+     truncated : boolean
+        Whether the truncated normal distribution should be used.
+     """
+    if len(shape) == 4:
+        f_in = int(np.prod(shape[:-1]))
+    else:
+        f_in = shape[0]
+    
+    if truncated:
+        return tf.truncated_normal(shape=shape, stddev=tf.cast(tf.sqrt(1 / f_in / 10), tf.float32))
+    else:
+        return tf.random_normal(shape=shape, stddev=tf.cast(tf.sqrt(1 / f_in / 10), tf.float32))
+
+
+def weight_klambauer_elu(shape, seed=None):
+    """ Preferred variable initialization method for the non-scaled ELU activation function.
+
+    Parameters
+    -------
+    shape : array
+        the shape of the weight matrix. First dimension contains the width of the layer below.
+    seed : integer
+        seed for the initialization
+    """
+    
+    klambauer_constat = 1.5505188080679277
+    initial = tf.contrib.layers.variance_scaling_initializer(factor=klambauer_constat, mode='FAN_IN',
+                                                             uniform=False, seed=seed, dtype=tf.float32)
+    return initial(shape)
+
+
 def gaussian(x, mu, std):
     return (1. / (np.sqrt(2 * np.pi) * std)) * (np.exp(- (x - mu) * (x - mu) / (2 * std * std)))
 
 
+def weight_xavier(shape, uniform=False, seed=None):
+    initial = tf.contrib.layers.xavier_initializer(uniform=uniform, seed=seed, dtype=tf.float32)
+    return initial(shape)
+
+
 def weight_xavier_conv2d(shape, uniform=False, seed=None):
     initial = tf.contrib.layers.xavier_initializer_conv2d(uniform=uniform, seed=seed, dtype=tf.float32)
-    
     return initial(shape)
 
 
