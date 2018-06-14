@@ -13,17 +13,4 @@
             "name": "Hofmarcher Markus"
         }
     ], 
-    "access_right": "open", 
-    "related_identifiers": [
-        {
-            "scheme": "url", 
-            "identifier": "https://github.com/bioinf-jku/tensorflow-layer-library/tree/v1.0.0", 
-            "relation": "isSupplementTo"
-        }, 
-        {
-            "scheme": "doi", 
-            "identifier": "10.5281/zenodo.1289301", 
-            "relation": "isVersionOf"
-        }
-    ]
 }
