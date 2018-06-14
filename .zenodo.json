@@ -1,5 +1,4 @@
 {
-    "description": "Tensorflow Layer Library (TeLL)", 
     "license": "MIT", 
     "access_right": "open", 
     "title": "Tensorflow Layer Library (TeLL): v1.0.0", 
@@ -9,10 +8,10 @@
     "description": "<p>Tensorflow Layer Library (TeLL)</p>", 
     "creators": [
         {
-            "name": "Widrich Michael"
+            "name": "Michael Widrich"
         }, 
         {
-            "name": "Hofmarcher Markus"
+            "name": "Markus Hofmarcher"
         }
     ]
 }
