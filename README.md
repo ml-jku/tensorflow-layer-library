@@ -1,9 +1,20 @@
 # Tensorflow Layer Library (TeLL)
+[![DOI](https://zenodo.org/badge/87196662.svg)](https://zenodo.org/badge/latestdoi/87196662)
 Provides a variety of tensorflow-based network layers, flexible (recurrent) network designs, convenience routines for saving and resuming networks, and more!
 
 Copyright (c) Michael Widrich and Markus Hofmarcher, Institute of Bioinformatics, Johannes Kepler University Linz, Austria.
 
-If you use TeLL or parts of the code in your work, please cite accordingly.
+If you use TeLL or parts of the code in your work, please cite us as
+
+    @misc{michael_widrich_2018_1289438,
+      author       = {Michael Widrich and
+                      Markus Hofmarcher},
+      title        = {Tensorflow Layer Library (TeLL): v1.0.0},
+      month        = jun,
+      year         = 2018,
+      doi          = {10.5281/zenodo.1289438},
+      url          = {https://doi.org/10.5281/zenodo.1289438}
+    }
 
 ## Setup
 You can either install TeLL via pip, use TeLL as a git-submodule in your git project, or download it as a static Python package.
