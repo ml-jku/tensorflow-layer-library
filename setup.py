@@ -27,7 +27,7 @@ setup(
     long_description=long_description,
     
     # The project's main homepage.
-    url='https://github.com/bioinf-jku/tensorflow-layer-library',
+    url='https://github.com/ml-jku/tensorflow-layer-library',
     
     # Author details
     author='Michael Widrich, Markus Hofmarcher',
