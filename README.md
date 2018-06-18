@@ -7,14 +7,15 @@ Copyright (c) Michael Widrich and Markus Hofmarcher, Institute of Bioinformatics
 
 If you use TeLL or parts of the code in your work, please cite us as
 
-    @misc{michael_widrich_2018_1289438,
-      author       = {Michael Widrich and
-                      Markus Hofmarcher},
-      title        = {Tensorflow Layer Library (TeLL): v1.0.0},
-      month        = jun,
-      year         = 2018,
-      doi          = {10.5281/zenodo.1289438},
-      url          = {https://doi.org/10.5281/zenodo.1289438}
+    @misc{tell,
+      author       = {Michael Widrich and Markus Hofmarcher},
+      title        = {{Tensorflow Layer Library (TeLL)}},
+      publisher = {Zenodo},
+      journal = {GitHub repository},
+      howpublished = {\url{https://github.com/ml-jku/tensorflow-layer-library}},
+      year         = {2018},
+      doi          = {10.5281/zenodo.1292055},
+      url          = {https://doi.org/10.5281/zenodo.1292055},
     }
 
 ## Setup
