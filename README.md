@@ -89,7 +89,7 @@ Sources: [https://git-scm.com/book/en/v2/Git-Tools-Submodules](https://git-scm.c
 [https://docs.gitlab.com/ce/ci/git_submodules.html](https://docs.gitlab.com/ce/ci/git_submodules.html)
 
 ### Run Example Main-File
-Try to run one of the examples [samples/main_lstm.py](https://git.bioinf.jku.at/TeLL/tensorflow-layer-library/blob/master/samples/main_lstm.py) or [samples/main_convlstm.py](https://git.bioinf.jku.at/TeLL/tensorflow-layer-library/blob/master/samples/main_convlstm.py) provided in the tensorflow-layer-library folder.
+Try to run one of the examples [samples/main_lstm.py](samples/main_lstm.py) or [samples/main_convlstm.py](samples/main_convlstm.py) provided in the tensorflow-layer-library folder.
 The following should start the computations and create a working_dir folder in the tensorflow-layer-library/samples folder:
 
 ```
@@ -103,8 +103,8 @@ There are three basic steps to perform to create and run your architecture:
 
 ### Design Dataloader
 In order to access/create your dataset, a reader/loader class should be used. This class has to contain a batch_loader() function to yield the minibatches.
-Examples for creator-classes are ShortLongDataset and MovingDotDataset in [TeLL/datasets.py](https://git.bioinf.jku.at/TeLL/tensorflow-layer-library/blob/master/TeLL/datasets.py), which can be adapted for your needs.
-For reading data, [TeLL/datasets.py](https://git.bioinf.jku.at/TeLL/tensorflow-layer-library/blob/master/TeLL/datasets.py) provides the classes DatareaderSimpleFiles and DatareaderAdvancedImageFiles, from which readers can be derived from.
+Examples for creator-classes are ShortLongDataset and MovingDotDataset in [TeLL/datasets.py](TeLL/datasets.py), which can be adapted for your needs.
+For reading data, [TeLL/datasets.py](TeLL/datasets.py) provides the classes DatareaderSimpleFiles and DatareaderAdvancedImageFiles, from which readers can be derived from.
 DatareaderSimpleFiles and DatareaderAdvancedImageFiles provide support for automatic loading of data in background processes, search for datafiles, etc..
 
 ### Design Network Architecture
@@ -125,12 +125,12 @@ outputlayer = Layer(incoming=layer2, ...)
 output = outputlayer.get_output()
 ```
 
-A collection of forward- and recurrent network sample architectures can be found in [TeLL/samples/sample_architectures.py](https://git.bioinf.jku.at/TeLL/tensorflow-layer-library/blob/master/samples/sample_architectures.py).
+A collection of forward- and recurrent network sample architectures can be found in [TeLL/samples/sample_architectures.py](samples/sample_architectures.py).
 
 ### Adapt Main-File
-To adapt the main-file to your needs, copy the example file [samples/main_lstm.py](https://git.bioinf.jku.at/TeLL/tensorflow-layer-library/blob/master/samples/main_lstm.py) or [samples/main_convlstm.py](https://git.bioinf.jku.at/TeLL/tensorflow-layer-library/blob/master/samples/main_convlstm.py) and modify the loss calculations, starting at line 246, and the dataloader.
+To adapt the main-file to your needs, copy the example file [samples/main_lstm.py](samples/main_lstm.py) or [samples/main_convlstm.py](samples/main_convlstm.py) and modify the loss calculations, starting at line 246, and the dataloader.
 
-Finally, you will need to create your configuration file (examples can be found in [samples/](https://git.bioinf.jku.at/TeLL/tensorflow-layer-library/tree/master/samples)) and you are good to go!
+Finally, you will need to create your configuration file (examples can be found in [samples/](samples)) and you are good to go!
 
 ### Utility Features
 
@@ -199,6 +199,6 @@ tensorflow-layer-library/
 
 ## Contributing
 
-If you want to contribute to TeLL, please read the [guidelines](https://git.bioinf.jku.at/TeLL/tensorflow-layer-library/blob/master/CONTRIBUTING.md), create a branch or fork, and send merge-requests.
+If you want to contribute to TeLL, please read the [guidelines](CONTRIBUTING.md), create a branch or fork, and send merge-requests.
 For contribution to this project, your have to assign the copyright of the contribution to the TeLL project.
 Please include the statement "I hereby assign copyright in this code to the TeLL project, to be licensed under the same terms as the rest of the code." in your merge requests.
