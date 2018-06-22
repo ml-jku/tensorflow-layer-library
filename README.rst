@@ -102,9 +102,9 @@ Run Example Main-File
 ~~~~~~~~~~~~~~~~~~~~~
 
 Try to run one of the examples
-`main\_lstm\_example.py <main_lstm_example.py>`__
+`main\_lstm\_example.py <samples/main_lstm_example.py>`__
 or
-`main\_convlstm\_example.py <main_convlstm_example.py>`__
+`main\_convlstm\_example.py <samples/main_convlstm_example.py>`__
 provided in the tensorflow-layer-library folder. The following should
 start the computations and create a working\_dir folder in the
 tensorflow-layer-library folder:
@@ -128,9 +128,9 @@ In order to access/create your dataset, a reader/loader class should be
 used. This class has to contain a batch\_loader() function to yield the
 minibatches. Examples for creator-classes are ShortLongDataset and
 MovingDotDataset in
-`TeLL/network\_modules/datasets.py <network_modules/datasets.py>`__,
+`TeLL/network\_modules/datasets.py <TeLL/network_modules/datasets.py>`__,
 which can be adapted for your needs. For reading data,
-`TeLL/network\_modules/datasets.py <network_modules/datareader.py>`__
+`TeLL/network\_modules/datasets.py <TeLL/network_modules/datareader.py>`__
 provides the classes DatareaderSimpleFiles and
 DatareaderAdvancedImageFiles, from which readers can be derived from.
 DatareaderSimpleFiles and DatareaderAdvancedImageFiles provide support
@@ -160,7 +160,7 @@ layers can simply be stacked as follows:
 
 A collection of forward- and recurrent network sample architectures can
 be found in
-`TeLL/architectures/sample\_architectures.py <architectures/sample_architectures.py>`__.
+`TeLL/architectures/sample\_architectures.py <TeLL/architectures/sample_architectures.py>`__.
 
 Adapt Main-File
 ~~~~~~~~~~~~~~~
@@ -168,7 +168,7 @@ Adapt Main-File
 To adapt the main-file to your needs, copy the example file
 `TeLL/architectures/main\_lstm\_example.py <main_lstm_example.py>`__
 or
-`architectures/main\_lstm\_example.py <main_convlstm_example.py>`__
+`architectures/main\_lstm\_example.py <TeLL/architectures/main_convlstm_example.py>`__
 and modify the loss calculations, starting at line 246, and the
 dataloader.
 
@@ -179,7 +179,7 @@ the path to the system's PYTHONPATH.
 
 Finally, you will need to create your configuration file (examples can
 be found in
-`TeLL/configs/examples <configs/examples>`__)
+`TeLL/configs/examples <TeLL/configs/examples>`__)
 and you are good to go!
 
 Utility Features
